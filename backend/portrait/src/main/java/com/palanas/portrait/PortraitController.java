@@ -31,6 +31,9 @@ public class PortraitController {
     @Autowired
     ImageService imageService;
 
+    @Autowired
+    com.palanas.portrait.security.JwtUtil jwtUtil;
+
     @GetMapping("/artists")
     public ResponseEntity<?> artists() {
         return ResponseEntity.ok(artistRepository.findAll());
@@ -42,13 +45,17 @@ public class PortraitController {
     }
 
     @PostMapping("/orders")
-    public ResponseEntity<?> createOrder(@RequestParam("image") MultipartFile image,
+    public ResponseEntity<?> createOrder(@RequestHeader(value = "Authorization", required = false) String auth,
+                                         @RequestParam("image") MultipartFile image,
                                          @RequestParam(required = false) Long artistId,
                                          @RequestParam(required = false) Long frameId,
                                          @RequestParam(required = false) String size,
                                          @RequestParam(required = false) String customerName,
                                          @RequestParam(required = false) String customerEmail) {
         try {
+            if (auth == null || !auth.startsWith("Bearer ")) return ResponseEntity.status(401).body("Missing Authorization");
+            String token = auth.substring(7);
+            try { jwtUtil.parse(token); } catch (Exception ex) { return ResponseEntity.status(401).body("Invalid token: " + ex.getMessage()); }
             String processedPath = imageService.processAndSave(image);
 
             OrderEntity o = new OrderEntity();
@@ -58,7 +65,21 @@ public class PortraitController {
             o.customerName = customerName;
             o.customerEmail = customerEmail;
             o.processedImagePath = processedPath;
-            o.price = 49.99; // placeholder
+
+            // compute price based on frame basePrice and size multiplier
+            double price = 49.99;
+            if (frameId != null) {
+                Frame f = frameRepository.findById(frameId).orElse(null);
+                if (f != null && f.basePrice != null) {
+                    double base = f.basePrice;
+                    double mult = 1.0;
+                    if ("small".equalsIgnoreCase(size)) mult = 1.0;
+                    else if ("medium".equalsIgnoreCase(size)) mult = 1.5;
+                    else if ("large".equalsIgnoreCase(size)) mult = 2.0;
+                    price = Math.round(base * mult * 100.0) / 100.0;
+                }
+            }
+            o.price = price;
 
             OrderEntity saved = orderRepository.save(o);
             return ResponseEntity.ok(saved);

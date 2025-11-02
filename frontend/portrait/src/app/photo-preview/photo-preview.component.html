@@ -1,0 +1,42 @@
+<div class="uploader">
+  <label>Choose Artist
+    <select [(ngModel)]="selectedArtistId">
+      <option value="">--select--</option>
+      <option *ngFor="let a of artists" [value]="a.id">{{a.name}}</option>
+    </select>
+  </label>
+
+  <label>Choose Frame
+    <select [(ngModel)]="selectedFrameId" (ngModelChange)="onFrameChange($event)">
+      <option value="">None</option>
+      <option *ngFor="let f of frames" [value]="f.id">{{f.name}}</option>
+    </select>
+  </label>
+
+  <label>Size
+    <select [(ngModel)]="size" (change)="draw()">
+      <option value="small">Small</option>
+      <option value="medium">Medium</option>
+      <option value="large">Large</option>
+    </select>
+  </label>
+
+  <div class="price">Price: {{ getPrice() | currency }}</div>
+
+  <input #fileInput type="file" accept="image/*" (change)="onFileChange($event)" />
+    <div class="preview">
+      <div class="controls-row">
+        <label>Zoom <input type="range" min="0.5" max="2" step="0.05" [(ngModel)]="scale" (input)="draw()" /></label>
+        <div>Scale: {{ scale | number:'1.2-2' }}</div>
+      </div>
+      <canvas #canvas (pointerdown)="onPointerDown($event)"
+        (pointermove)="onPointerMove($event)"
+        (pointerup)="onPointerUp($event)"
+        (pointercancel)="onPointerUp($event)"></canvas>
+    </div>
+
+  <div class="controls">
+    <button (click)="exportPreview()">Submit preview</button>
+    <button (click)="clear()">Clear</button>
+  </div>
+</div>
