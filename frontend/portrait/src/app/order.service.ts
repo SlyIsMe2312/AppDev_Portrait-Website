@@ -14,4 +14,13 @@ export class OrderService {
     const headers = token ? new HttpHeaders({ Authorization: 'Bearer ' + token }) : undefined;
     return this.http.post(this.base + '/orders', fd, { headers });
   }
+
+  listOrdersForArtist(artistId: string|number) {
+    return this.http.get(this.base + `/artists/${artistId}/orders`);
+  }
+
+  listOrdersForCustomer(email?: string) {
+    const url = this.base + '/user/orders' + (email ? ('?email=' + encodeURIComponent(email)) : '');
+    return this.http.get(url, { headers: this.auth.token() ? new HttpHeaders({ Authorization: 'Bearer ' + this.auth.token() }) : undefined as any });
+  }
 }

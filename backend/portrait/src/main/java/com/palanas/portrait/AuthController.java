@@ -1,6 +1,8 @@
 package com.palanas.portrait;
 
 import com.palanas.portrait.model.User;
+import com.palanas.portrait.model.Artist;
+import com.palanas.portrait.repo.ArtistRepository;
 import com.palanas.portrait.repo.UserRepository;
 import com.palanas.portrait.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,9 @@ public class AuthController {
     UserRepository userRepository;
 
     @Autowired
+    ArtistRepository artistRepository;
+
+    @Autowired
     PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -29,8 +34,19 @@ public class AuthController {
         String email = body.get("email");
         String password = body.get("password");
         if (userRepository.findByEmail(email).isPresent()) return ResponseEntity.badRequest().body("User exists");
-        User u = new User(name, email, passwordEncoder.encode(password), body.getOrDefault("role","customer"));
-        userRepository.save(u);
+        String role = body.getOrDefault("role","customer");
+        User u = new User(name, email, passwordEncoder.encode(password), role);
+        // default profile photo and bio for new users
+        u.profilePhotoPath = "/assets/images/default-profile.png";
+        u.bio = "Hi — tell people a bit about yourself here. This is your public bio.";
+    userRepository.save(u);
+        // if signing up as an artist, also create an Artist record (basic)
+        if ("artist".equalsIgnoreCase(role)) {
+            Artist a = new Artist(name, email);
+            // point to frontend asset default; frontend will use this if no uploaded photo exists
+            a.profilePhotoPath = "/assets/images/default-profile.png";
+            artistRepository.save(a);
+        }
         String token = jwtUtil.generateToken(email, u.role);
         return ResponseEntity.ok(Map.of("token", token, "role", u.role));
     }

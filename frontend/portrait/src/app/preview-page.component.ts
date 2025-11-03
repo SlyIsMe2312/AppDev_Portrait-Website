@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { PhotoPreviewComponent } from './photo-preview/photo-preview.component';
+import { CommonModule } from '@angular/common';
+import { AuthService } from './auth.service';
 import { OrderService } from './order.service';
 import { ToastService } from './toast.service';
 import { HttpClient } from '@angular/common/http';
@@ -7,7 +9,7 @@ import { HttpClient } from '@angular/common/http';
 
 @Component({
   standalone: true,
-  imports: [PhotoPreviewComponent],
+  imports: [CommonModule, PhotoPreviewComponent],
   template: `
     <div class="container">
       <header class="page-header">
@@ -15,9 +17,14 @@ import { HttpClient } from '@angular/common/http';
         <p>Upload your photo, choose a frame, and adjust the preview to your liking.</p>
       </header>
       
+      <div *ngIf="!auth.isAuthenticated()" class="guest-banner" style="background:#fff4e5;border:1px solid #ffd8a8;padding:12px;margin-bottom:12px;border-radius:6px;">
+        <strong>Heads up:</strong> you can preview images without an account, but uploading and submitting a preview requires an account. <a routerLink="/signup">Sign up</a> or <a routerLink="/login">Log in</a> to enable uploads.
+      </div>
+
       <app-photo-preview 
         [artists]="artists"
         [frames]="frames"
+        [canUpload]="true"
         (readyForUpload)="onPreview($event)"
         [class.loading]="loading">
       </app-photo-preview>
@@ -49,7 +56,7 @@ export class PreviewPageComponent implements OnInit {
   artists: { id: string; name: string }[] = [];
   frames: any[] = [];
 
-  constructor(private order: OrderService, private toast: ToastService, private http: HttpClient) {}
+  constructor(private order: OrderService, private toast: ToastService, private http: HttpClient, public auth: AuthService) {}
 
   ngOnInit(): void {
     this.http.get<any[]>('/api/artists').subscribe({
@@ -65,6 +72,12 @@ export class PreviewPageComponent implements OnInit {
 
   onPreview(fd: FormData) {
     this.loading = true;
+    // attach customer info if available
+    const cur = this.auth.current();
+    if (cur && cur.email) {
+      fd.append('customerEmail', cur.email);
+      fd.append('customerName', cur.email);
+    }
     this.order.submitOrder(fd).subscribe({
       next: res => { this.loading = false; this.toast.show('Order created #' + (res.id ?? '')); },
       error: err => { this.loading = false; this.toast.show('Failed to create order'); }

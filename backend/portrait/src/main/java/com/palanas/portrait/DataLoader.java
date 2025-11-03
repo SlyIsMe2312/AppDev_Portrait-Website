@@ -28,10 +28,18 @@ public class DataLoader implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         if (artistRepository.count() == 0) {
-            Artist a1 = new Artist(); a1.name = "Sketchy Sam"; a1.email = "sam@example.com";
-            Artist a2 = new Artist(); a2.name = "Pencil Pat"; a2.email = "pat@example.com";
+            Artist a1 = new Artist(); a1.name = "Sketchy Sam"; a1.email = "sam@example.com"; a1.profilePhotoPath = "/assets/images/default-profile.png";
+            Artist a2 = new Artist(); a2.name = "Pencil Pat"; a2.email = "pat@example.com"; a2.profilePhotoPath = "/assets/images/default-profile.png";
             artistRepository.save(a1);
             artistRepository.save(a2);
+        } else {
+            // migrate existing artists: set profilePhotoPath to default if missing
+            artistRepository.findAll().forEach(a -> {
+                if (a.profilePhotoPath == null || a.profilePhotoPath.isBlank()) {
+                    a.profilePhotoPath = "/assets/images/default-profile.png";
+                    artistRepository.save(a);
+                }
+            });
         }
 
         if (frameRepository.count() == 0) {
@@ -43,7 +51,9 @@ public class DataLoader implements CommandLineRunner {
 
         if (userRepository.count() == 0) {
             User u1 = new User("Customer One","cust@example.com", passwordEncoder.encode("password"), "customer");
+            u1.bio = "Hi, I'm Customer One — this is a sample bio. Add your own about me here.";
             User u2 = new User("Artist One","artist@example.com", passwordEncoder.encode("password"), "artist");
+            u2.bio = "Hi, I'm Artist One — I create portraits and sketches. Add your own about me here.";
             userRepository.save(u1);
             userRepository.save(u2);
         }

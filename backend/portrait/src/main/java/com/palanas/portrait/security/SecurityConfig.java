@@ -29,7 +29,8 @@ public class SecurityConfig {
         http.csrf().disable();
         http.addFilterBefore(new JwtAuthenticationFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
         http.authorizeHttpRequests()
-            .requestMatchers("/api/auth/**", "/api/frames", "/api/artists", "/frames/**").permitAll()
+            // for school/demo: allow all API endpoints without authentication
+            .requestMatchers("/api/**").permitAll()
             .anyRequest().authenticated();
         return http.build();
     }

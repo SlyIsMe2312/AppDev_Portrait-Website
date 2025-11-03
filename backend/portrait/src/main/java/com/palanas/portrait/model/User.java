@@ -14,6 +14,12 @@ public class User {
     public String email;
     public String passwordHash;
     public String role; // "customer" or "artist"
+    // optional profile settings
+    public String nickname;
+    public Boolean showEmail = false;
+    public String profilePhotoPath;
+    // optional about / bio shown on user's public profile
+    public String bio;
 
     public User() {}
     public User(String name, String email, String passwordHash, String role) { this.name = name; this.email = email; this.passwordHash = passwordHash; this.role = role; }

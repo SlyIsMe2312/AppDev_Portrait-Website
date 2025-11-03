@@ -67,7 +67,7 @@ export class LoginComponent {
     this.auth.login(email, password).subscribe({
       next: (res: any) => {
         this.loading = false;
-        this.auth.setToken(res.token, res.role);
+  this.auth.setToken(res.token, res.role, email);
         this.toast.show('Logged in successfully');
         this.router.navigateByUrl('/');
       },

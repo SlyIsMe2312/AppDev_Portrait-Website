@@ -14,6 +14,7 @@ type Frame = { id: string; name: string; overlayUrl: string; aspectRatio?: numbe
 export class PhotoPreviewComponent implements OnChanges {
   @Input() artists: { id: string; name: string }[] = [];
   @Input() frames: Frame[] = [];
+  @Input() canUpload: boolean = true;
   @Output() readyForUpload = new EventEmitter<FormData>();
 
   @ViewChild('canvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
@@ -57,6 +58,7 @@ export class PhotoPreviewComponent implements OnChanges {
     const input = ev.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
+    if (!this.canUpload) return; // protect when uploads are disabled for guests
     const url = URL.createObjectURL(file);
     this.image = new Image();
     this.image.onload = () => {
@@ -122,63 +124,94 @@ export class PhotoPreviewComponent implements OnChanges {
     if (this.size === 'small') mult = 1.0;
     else if (this.size === 'medium') mult = 1.5;
     else if (this.size === 'large') mult = 2.0;
-    return Math.round(base * mult * 100) / 100;
+    const usd = Math.round(base * mult * 100) / 100;
+    // convert USD to PHP using recommended default rate: 1 USD = 40 PHP
+    const USD_TO_PHP = 40.0;
+    return Math.round(usd * USD_TO_PHP * 100) / 100;
   }
 
   draw() {
     const canvas = this.canvasRef.nativeElement;
     const ctx = canvas.getContext('2d')!;
-    if (!this.image.width) return;
-    
-  // Set canvas size based on selected frame aspect ratio (fallback 4:3)
-  const containerWidth = canvas.parentElement?.clientWidth || 800;
-  const aspect = this.selectedFrame?.aspectRatio || (4/3);
-  const containerHeight = Math.round(containerWidth / aspect);
-    canvas.width = containerWidth;
-    canvas.height = containerHeight;
+    // allow drawing when either an image is loaded or an overlay frame exists
+    const hasImage = !!this.image && !!this.image.width;
+    const hasOverlay = !!this.overlayImage && this.overlayImage.complete;
+    if (!hasImage && !hasOverlay) return;
+    // Compute available inner size of preview container (exclude padding)
+    const parent = canvas.parentElement as HTMLElement;
+    const style = getComputedStyle(parent);
+    const padX = parseFloat(style.paddingLeft || '0') + parseFloat(style.paddingRight || '0');
+    const padY = parseFloat(style.paddingTop || '0') + parseFloat(style.paddingBottom || '0');
+    const availableW = Math.max(16, parent.clientWidth - padX);
+    const availableH = Math.max(16, parent.clientHeight - padY);
+    // Maintain frame aspect ratio
+    const aspect = this.selectedFrame?.aspectRatio || (4/3);
+    let width = availableW;
+    let height = Math.round(width / aspect);
+    if (height > availableH) {
+      height = availableH;
+      width = Math.round(height * aspect);
+    }
+    // set canvas display size and backing store size
+    canvas.style.width = width + 'px';
+    canvas.style.height = height + 'px';
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     const off = document.createElement('canvas');
     off.width = canvas.width;
     off.height = canvas.height;
-    const ox = off.getContext('2d')!;
+  // we will read pixels repeatedly from this offscreen context, hint the browser
+  // so it can optimize readback performance
+  const ox = off.getContext('2d', { willReadFrequently: true })!;
 
     // Clear the canvas
     ox.clearRect(0, 0, off.width, off.height);
     ox.fillStyle = '#F7FAFC';
     ox.fillRect(0, 0, off.width, off.height);
 
-    // Calculate fit scale (fit the image inside canvas) and apply user scale
-    const fitScale = Math.min(canvas.width / this.image.width, canvas.height / this.image.height);
-    const drawScale = fitScale * this.scale;
+    if (hasImage) {
+  // Calculate fit scale: prefer filling the canvas height (image spans the preview height)
+  // Users can still adjust zoom via the scale slider which multiplies this base fitScale.
+  const fitScale = (canvas.height / this.image.height);
+      const drawScale = fitScale * this.scale;
 
-    // apply pan/zoom when drawing source into offscreen; draw the image centered
-    ox.save();
-    ox.translate(canvas.width / 2 + this.offsetX, canvas.height / 2 + this.offsetY);
-    ox.scale(drawScale, drawScale);
-    // draw the image centered at translated origin
-    ox.drawImage(this.image, -this.image.width / 2, -this.image.height / 2);
-    ox.restore();
+      // apply pan/zoom when drawing source into offscreen; draw the image centered
+      ox.save();
+      ox.translate(canvas.width / 2 + this.offsetX, canvas.height / 2 + this.offsetY);
+      ox.scale(drawScale, drawScale);
+      // draw the image centered at translated origin
+      ox.drawImage(this.image, -this.image.width / 2, -this.image.height / 2);
+      ox.restore();
 
-    const id = ox.getImageData(0, 0, off.width, off.height);
-    const px = id.data;
-    for (let i = 0; i < px.length; i += 4) {
-      const r = px[i], g = px[i + 1], b = px[i + 2];
-      const gray = 0.21 * r + 0.72 * g + 0.07 * b;
-      px[i] = px[i + 1] = px[i + 2] = gray;
+      const id = ox.getImageData(0, 0, off.width, off.height);
+      const px = id.data;
+      for (let i = 0; i < px.length; i += 4) {
+        const r = px[i], g = px[i + 1], b = px[i + 2];
+        const gray = 0.21 * r + 0.72 * g + 0.07 * b;
+        px[i] = px[i + 1] = px[i + 2] = gray;
+      }
+      ox.putImageData(id, 0, 0);
+
+      const sobel = this.sobelFilter(ox, off.width, off.height);
+
+      ctx.fillStyle = '#f7f2ea';
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(off, 0, 0, width, height);
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.drawImage(sobel, 0, 0, width, height);
+      ctx.globalCompositeOperation = 'source-over';
+    } else {
+      // No image: draw a plain background so overlay/frame can be seen on its own
+      ctx.fillStyle = '#f7f2ea';
+      ctx.fillRect(0, 0, width, height);
     }
-    ox.putImageData(id, 0, 0);
 
-    const sobel = this.sobelFilter(ox, off.width, off.height);
-
-    ctx.fillStyle = '#f7f2ea';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(off, 0, 0);
-    ctx.globalCompositeOperation = 'multiply';
-    ctx.drawImage(sobel, 0, 0);
-    ctx.globalCompositeOperation = 'source-over';
-
-    if (this.overlayImage && this.overlayImage.complete) {
-      ctx.drawImage(this.overlayImage, 0, 0, canvas.width, canvas.height);
+    // Always draw the overlay/frame if available so the full frame is visible
+    if (hasOverlay) {
+      ctx.drawImage(this.overlayImage, 0, 0, width, height);
     }
   }
 
@@ -187,7 +220,8 @@ export class PhotoPreviewComponent implements OnChanges {
     const dstCanvas = document.createElement('canvas');
     dstCanvas.width = w;
     dstCanvas.height = h;
-    const dstCtx = dstCanvas.getContext('2d')!;
+  // dstCtx may also be used for putImageData; set willReadFrequently to be safe
+  const dstCtx = dstCanvas.getContext('2d', { willReadFrequently: true })!;
     const dst = dstCtx.createImageData(w, h);
 
     const gx = [-1,0,1,-2,0,2,-1,0,1];
@@ -216,18 +250,8 @@ export class PhotoPreviewComponent implements OnChanges {
   }
 
   exportPreview() {
-    // create a final canvas applying transforms at natural resolution
-    const canvas = document.createElement('canvas');
-    const w = this.image.width; const h = this.image.height;
-    canvas.width = w; canvas.height = h;
-    const ctx = canvas.getContext('2d')!;
-    ctx.fillStyle = '#f7f2ea'; ctx.fillRect(0,0,w,h);
-    ctx.save();
-    ctx.translate(this.offsetX * (w / this.canvasRef.nativeElement.width), this.offsetY * (h / this.canvasRef.nativeElement.height));
-    ctx.scale(this.scale, this.scale);
-    ctx.drawImage(this.image, 0, 0, w, h);
-    ctx.restore();
-    if (this.overlayImage && this.overlayImage.complete) ctx.drawImage(this.overlayImage, 0, 0, w, h);
+    // Use the visible preview canvas (which already represents the user's crop/zoom/pan)
+    const canvas = this.canvasRef.nativeElement;
     canvas.toBlob((blob) => {
       if (!blob) return;
       const fd = new FormData();

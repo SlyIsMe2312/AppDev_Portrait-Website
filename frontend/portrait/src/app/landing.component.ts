@@ -13,7 +13,7 @@ import { AuthService } from './auth.service';
         <p>Upload your photo and our talented artists will create a stunning portrait sketch that captures the essence of your memories.</p>
         <div class="hero-actions">
           <a routerLink="/preview" class="btn btn-accent">Create Your Portrait</a>
-          <a routerLink="/signup" class="btn btn-primary">Join as Artist</a>
+          <a [routerLink]="['/signup']" [queryParams]="{ role: 'artist' }" class="btn btn-primary">Join as Artist</a>
         </div>
       </div>
     </section>
@@ -59,7 +59,7 @@ import { AuthService } from './auth.service';
         <div class="card" style="text-align: center; padding: 48px;">
           <h2>Ready to Create Your Portrait?</h2>
           <p>Join thousands of satisfied customers who have transformed their photos into lasting memories.</p>
-          <a routerLink="/signup" class="btn btn-accent" style="margin-top: 24px;">Get Started Now</a>
+          <a [routerLink]="['/signup']" class="btn btn-accent" style="margin-top: 24px;">Get Started Now</a>
         </div>
       </div>
     </section>

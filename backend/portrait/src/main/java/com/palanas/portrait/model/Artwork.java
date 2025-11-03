@@ -7,25 +7,16 @@ import jakarta.persistence.Id;
 import java.time.LocalDateTime;
 
 @Entity
-public class OrderEntity {
+public class Artwork {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     public Long id;
 
-    public String customerName;
-    public String customerEmail;
-
     public Long artistId;
-    public Long frameId;
-    public String sizeLabel;
-
-    // saved path to processed image
-    public String processedImagePath;
-
-    // public URL to access the processed image (served by /api/files/{filename})
-    public String processedImageUrl;
-
-    public Double price;
-
+    public String title;
+    public String imagePath;
     public LocalDateTime createdAt = LocalDateTime.now();
+
+    public Artwork() {}
+    public Artwork(Long artistId, String title, String imagePath) { this.artistId = artistId; this.title = title; this.imagePath = imagePath; }
 }

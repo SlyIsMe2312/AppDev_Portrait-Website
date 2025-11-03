@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from './auth.service';
 import { ToastService } from './toast.service';
 import { CommonModule } from '@angular/common';
@@ -65,7 +65,11 @@ export class SignupComponent {
   name = '';
   email = '';
   password = '';
-  constructor(private auth: AuthService, private router: Router, private toast: ToastService) {}
+  role: string | null = null;
+  constructor(private auth: AuthService, private router: Router, private toast: ToastService, private route: ActivatedRoute) {
+    // read optional role from query params (e.g. ?role=artist)
+    this.route.queryParams.subscribe(q => { if (q['role']) this.role = q['role']; });
+  }
   onSubmit(e: Event) {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
@@ -75,12 +79,15 @@ export class SignupComponent {
     const password = data.get('password') as string;
     if (!name || !email || !password) { this.toast.show('All fields required'); return; }
     this.loading = true;
-    this.auth.signup(name, email, password).subscribe({
+    this.auth.signup(name, email, password, this.role || undefined).subscribe({
       next: (res: any) => {
         this.loading = false;
-        this.auth.setToken(res.token, res.role);
+  this.auth.setToken(res.token, res.role, email);
         this.toast.show('Account created successfully');
-        this.router.navigateByUrl('/');
+        // redirect artist users to artist dashboard, customers to customer or landing
+  if (res.role === 'artist') this.router.navigateByUrl('/artist');
+        else if (res.role === 'customer') this.router.navigateByUrl('/');
+        else this.router.navigateByUrl('/');
       },
       error: (err) => {
         this.loading = false;
