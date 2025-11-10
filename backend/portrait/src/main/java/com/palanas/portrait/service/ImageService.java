@@ -67,6 +67,36 @@ public class ImageService {
         return outPath.toAbsolutePath().toString();
     }
 
+    /**
+     * Save the uploaded image (optionally downscaled) without applying outline/edge processing.
+     * Used for profile photos where users expect their original image to be preserved.
+     */
+    public String saveOriginal(MultipartFile file) throws IOException {
+        BufferedImage src = ImageIO.read(file.getInputStream());
+        if (src == null) throw new IOException("Unsupported image format");
+
+        // downscale for storage if very large (same heuristic as processAndSave)
+        int max = 1200;
+        int w = src.getWidth();
+        int h = src.getHeight();
+        double scale = Math.min(1.0, (double) max / Math.max(w, h));
+        if (scale < 1.0) {
+            int nw = (int) (w * scale);
+            int nh = (int) (h * scale);
+            BufferedImage tmp = new BufferedImage(nw, nh, BufferedImage.TYPE_INT_RGB);
+            Graphics2D g = tmp.createGraphics();
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g.drawImage(src, 0, 0, nw, nh, null);
+            g.dispose();
+            src = tmp;
+        }
+
+        String filename = UUID.randomUUID().toString() + ".png";
+        Path outPath = storageDir.resolve(filename);
+        ImageIO.write(src, "PNG", outPath.toFile());
+        return outPath.toAbsolutePath().toString();
+    }
+
     private BufferedImage sobelEdge(BufferedImage gray) {
         int w = gray.getWidth();
         int h = gray.getHeight();

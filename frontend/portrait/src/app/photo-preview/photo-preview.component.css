@@ -1,0 +1,92 @@
+.uploader {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 800px;
+  margin: 24px auto;
+  padding: 24px;
+  background: var(--color-white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.preview {
+  position: relative;
+  border: 1px solid #E2E8F0;
+  background: #F7FAFC;
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  overflow: visible; /* allow frame edges to show */
+  width: 100%;
+  min-height: 280px; /* slightly smaller to avoid overflow on smaller screens */
+  box-sizing: border-box;
+}
+
+cavas, canvas {
+  display: block;
+  margin: 0 auto;
+  cursor: grab;
+  max-width: 100%;
+  /* actual size is controlled by the component draw() which sets style.width/height and backing store */
+}
+
+canvas:active {
+  cursor: grabbing;
+}
+
+.controls {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+/* Form controls styling */
+select, input[type="file"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #E2E8F0;
+  border-radius: var(--radius-sm);
+  margin-top: 4px;
+}
+
+input[type="range"] {
+  width: 200px;
+}
+
+/* Button styles for preview controls */
+.controls .btn {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.05);
+}
+
+
+/* Use the application's primary button color for preview actions to match navbar logout */
+.controls .btn-submit,
+.controls .btn-clear {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.controls .btn-submit:hover,
+.controls .btn-clear:hover {
+  background: var(--color-primary-light);
+}
+
+.controls .btn:disabled {
+  background: #94a3b8; /* gray-ish disabled */
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.controls { z-index: 50; }

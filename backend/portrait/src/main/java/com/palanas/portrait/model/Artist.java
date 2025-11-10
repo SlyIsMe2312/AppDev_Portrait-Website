@@ -13,6 +13,9 @@ public class Artist implements Serializable {
     public Long id;
     public String name;
     public String email;
+    public String profilePhotoPath;
+    public String bio;
+    public String nickname;
     
     public Artist() {}
     public Artist(String name, String email) { this.name = name; this.email = email; }

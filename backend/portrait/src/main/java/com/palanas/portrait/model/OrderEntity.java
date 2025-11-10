@@ -22,6 +22,22 @@ public class OrderEntity {
     // saved path to processed image
     public String processedImagePath;
 
+    // public URL to access the processed image (served by /api/files/{filename})
+    public String processedImageUrl;
+
+    // optional progress image uploaded by artist during fulfillment
+    public String progressImagePath;
+    public String progressImageUrl;
+
+    // order workflow status: RECEIVED, ACCEPTED, IN_PROGRESS, COMPLETED, AWAITING_PAYMENT, PAID, CANCELLED
+    public String status = "RECEIVED";
+
+    // payment flag
+    public Boolean paid = false;
+
+    // when true the order is hidden from active order lists
+    public Boolean archived = false;
+
     public Double price;
 
     public LocalDateTime createdAt = LocalDateTime.now();

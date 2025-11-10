@@ -1,0 +1,46 @@
+<div class="uploader">
+  <label>Choose Artist
+    <select [(ngModel)]="selectedArtistId">
+      <option value="">--select--</option>
+      <option *ngFor="let a of artists" [value]="a.id">{{a.name}}</option>
+    </select>
+  </label>
+
+  <label>Choose Frame
+    <select [(ngModel)]="selectedFrameId" (ngModelChange)="onFrameChange($event)">
+      <option value="">None</option>
+      <option *ngFor="let f of frames" [value]="f.id">{{f.name}}</option>
+    </select>
+  </label>
+
+  <label>Size
+    <select [(ngModel)]="size" (change)="draw()">
+      <option value="small">Small</option>
+      <option value="medium">Medium</option>
+      <option value="large">Large</option>
+    </select>
+  </label>
+
+  <div class="price">Price: {{ getPrice() | currency:'PHP':'symbol':'1.2-2' }}</div>
+
+  <input #fileInput type="file" accept="image/*" (change)="onFileChange($event)" [disabled]="!canUpload" />
+    <div class="preview">
+      <div class="controls-row">
+        <label>Zoom <input type="range" min="0.5" max="2" step="0.05" [(ngModel)]="scale" (input)="draw()" /></label>
+        <div>Scale: {{ scale | number:'1.2-2' }}</div>
+      </div>
+      <canvas #canvas (pointerdown)="onPointerDown($event)"
+        (pointermove)="onPointerMove($event)"
+        (pointerup)="onPointerUp($event)"
+        (pointercancel)="onPointerUp($event)"></canvas>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-primary btn-submit" (click)="exportPreview()" [disabled]="!canUpload">Submit preview</button>
+      <button class="btn btn-primary btn-clear" (click)="clear()">Clear</button>
+    </div>
+
+    <div *ngIf="!canUpload" class="guest-note" style="margin-top:12px;color:#666;">
+      Please <a routerLink="/signup">create an account</a> or <a routerLink="/login">log in</a> to enable uploads and submit previews.
+    </div>
+</div>
