@@ -7,7 +7,7 @@ import { ArtistService } from './artist.service';
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
-    <div class="container">
+  <div class="content">
       <h2>Explore Artworks</h2>
 
       <div class="artworks-grid" *ngIf="artworks && artworks.length > 0">
@@ -25,6 +25,7 @@ import { ArtistService } from './artist.service';
         <div class="artist-card card" *ngFor="let a of artists">
           <img [src]="a.profilePhotoPath || '/assets/images/default-profile.png'" alt="Profile" />
           <h3>{{ a.nickname || a.name }}</h3>
+          <p class="bio-snippet" *ngIf="a.bio">{{ a.bio.length > 100 ? (a.bio | slice:0:100) + '...' : a.bio }}</p>
           <a [routerLink]="['/artists', a.id]" class="btn">View Profile</a>
         </div>
       </div>

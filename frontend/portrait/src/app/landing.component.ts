@@ -8,7 +8,7 @@ import { AuthService } from './auth.service';
   imports: [CommonModule, RouterLink],
   template: `
     <section class="hero">
-      <div class="container">
+  <div class="content">
         <h1>Transform Your Photos into Timeless Portrait Art</h1>
         <p>Upload your photo and our talented artists will create a stunning portrait sketch that captures the essence of your memories.</p>
         <div class="hero-actions">
@@ -19,7 +19,7 @@ import { AuthService } from './auth.service';
     </section>
 
     <section class="features">
-      <div class="container">
+  <div class="content">
         <h2>How It Works</h2>
         <div class="features-grid">
           <div class="feature-card card">
@@ -55,7 +55,7 @@ import { AuthService } from './auth.service';
     </section>
 
     <section class="cta">
-      <div class="container">
+  <div class="content">
         <div class="card" style="text-align: center; padding: 48px;">
           <h2>Ready to Create Your Portrait?</h2>
           <p>Join thousands of satisfied customers who have transformed their photos into lasting memories.</p>

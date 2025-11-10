@@ -3,7 +3,7 @@ import { PhotoPreviewComponent } from './photo-preview/photo-preview.component';
 import { CommonModule } from '@angular/common';
 import { AuthService } from './auth.service';
 import { OrderService } from './order.service';
-import { ToastService } from './toast.service';
+import { toast } from './toast.service';
 import { HttpClient } from '@angular/common/http';
 
 
@@ -11,7 +11,7 @@ import { HttpClient } from '@angular/common/http';
   standalone: true,
   imports: [CommonModule, PhotoPreviewComponent],
   template: `
-    <div class="container">
+  <div class="content">
       <header class="page-header">
         <h2>Create Your Portrait Preview</h2>
         <p>Upload your photo, choose a frame, and adjust the preview to your liking.</p>
@@ -56,17 +56,17 @@ export class PreviewPageComponent implements OnInit {
   artists: { id: string; name: string }[] = [];
   frames: any[] = [];
 
-  constructor(private order: OrderService, private toast: ToastService, private http: HttpClient, public auth: AuthService) {}
+  constructor(private order: OrderService, private http: HttpClient, public auth: AuthService) {}
 
   ngOnInit(): void {
     this.http.get<any[]>('/api/artists').subscribe({
       next: a => this.artists = (a || []).map(x => ({ id: String(x.id), name: x.name })),
-      error: _ => this.toast.show('Failed to load artists')
+      error: _ => toast.show('Failed to load artists')
     });
 
     this.http.get<any[]>('/api/frames').subscribe({
       next: f => this.frames = (f || []).map(x => ({ id: String(x.id), name: x.name, overlayUrl: x.overlayPath, aspectRatio: x.aspectRatio, basePrice: x.basePrice })),
-      error: _ => this.toast.show('Failed to load frames')
+      error: _ => toast.show('Failed to load frames')
     });
   }
 
@@ -79,8 +79,8 @@ export class PreviewPageComponent implements OnInit {
       fd.append('customerName', cur.email);
     }
     this.order.submitOrder(fd).subscribe({
-      next: res => { this.loading = false; this.toast.show('Order created #' + (res.id ?? '')); },
-      error: err => { this.loading = false; this.toast.show('Failed to create order'); }
+      next: res => { this.loading = false; toast.show('Order created #' + (res.id ?? '')); },
+      error: err => { this.loading = false; toast.show('Failed to create order'); }
     });
   }
 }

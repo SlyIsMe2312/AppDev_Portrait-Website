@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from './auth.service';
-import { ToastService } from './toast.service';
+import { toast } from './toast.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -55,25 +55,25 @@ export class LoginComponent {
   loading = false;
   email = '';
   password = '';
-  constructor(private auth: AuthService, private router: Router, private toast: ToastService) {}
+  constructor(private auth: AuthService, private router: Router) {}
   onSubmit(e: Event) {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
     const data = new FormData(form);
     const email = data.get('email') as string;
     const password = data.get('password') as string;
-    if (!email || !password) { this.toast.show('Email and password required'); return; }
+  if (!email || !password) { toast.show('Email and password required'); return; }
     this.loading = true;
     this.auth.login(email, password).subscribe({
       next: (res: any) => {
         this.loading = false;
   this.auth.setToken(res.token, res.role, email);
-        this.toast.show('Logged in successfully');
+        toast.show('Logged in successfully');
         this.router.navigateByUrl('/');
       },
       error: (err) => {
         this.loading = false;
-        this.toast.show(err.error || 'Login failed. Please check your credentials.');
+        toast.show(err.error || 'Login failed. Please check your credentials.');
       }
     });
   }

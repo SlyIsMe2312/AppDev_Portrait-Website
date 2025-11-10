@@ -36,6 +36,11 @@ export class ArtistService {
     return this.http.post(`/api/user/photo`, fd, { headers: this.authHeader() });
   }
 
+  // archived orders for an artist (no images expected)
+  listArchivedOrders(artistId: string|number) {
+    return this.http.get(`/api/artists/${artistId}/orders/archived`);
+  }
+
   updateUserSettings(body: any) {
     return this.http.post(`/api/user/settings`, body, { headers: this.authHeader() });
   }

@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from './auth.service';
-import { ToastService } from './toast.service';
+import { toast } from './toast.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -66,8 +66,8 @@ export class SignupComponent {
   email = '';
   password = '';
   role: string | null = null;
-  constructor(private auth: AuthService, private router: Router, private toast: ToastService, private route: ActivatedRoute) {
-    // read optional role from query params (e.g. ?role=artist)
+  constructor(private auth: AuthService, private router: Router, private route: ActivatedRoute) {
+
     this.route.queryParams.subscribe(q => { if (q['role']) this.role = q['role']; });
   }
   onSubmit(e: Event) {
@@ -77,21 +77,20 @@ export class SignupComponent {
     const name = data.get('name') as string;
     const email = data.get('email') as string;
     const password = data.get('password') as string;
-    if (!name || !email || !password) { this.toast.show('All fields required'); return; }
+  if (!name || !email || !password) { toast.show('All fields required'); return; }
     this.loading = true;
     this.auth.signup(name, email, password, this.role || undefined).subscribe({
       next: (res: any) => {
-        this.loading = false;
+    this.loading = false;
   this.auth.setToken(res.token, res.role, email);
-        this.toast.show('Account created successfully');
-        // redirect artist users to artist dashboard, customers to customer or landing
+    toast.show('Account created successfully');
   if (res.role === 'artist') this.router.navigateByUrl('/artist');
         else if (res.role === 'customer') this.router.navigateByUrl('/');
         else this.router.navigateByUrl('/');
       },
       error: (err) => {
         this.loading = false;
-        this.toast.show(err.error || 'Signup failed. Please try again.');
+        toast.show(err.error || 'Signup failed. Please try again.');
       }
     });
   }

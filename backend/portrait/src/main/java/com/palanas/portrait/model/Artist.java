@@ -13,11 +13,8 @@ public class Artist implements Serializable {
     public Long id;
     public String name;
     public String email;
-    // optional: path to uploaded profile photo
     public String profilePhotoPath;
-    // optional bio / portfolio notes
     public String bio;
-    // optional nickname to show on public profiles
     public String nickname;
     
     public Artist() {}

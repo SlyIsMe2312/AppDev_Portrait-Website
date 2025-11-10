@@ -13,12 +13,10 @@ public class User {
     public String name;
     public String email;
     public String passwordHash;
-    public String role; // "customer" or "artist"
-    // optional profile settings
+    public String role;
     public String nickname;
     public Boolean showEmail = false;
     public String profilePhotoPath;
-    // optional about / bio shown on user's public profile
     public String bio;
 
     public User() {}
